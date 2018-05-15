@@ -33,14 +33,17 @@ public class Board extends View {
     private static boolean exp;
     private static Paints p;
     private static int[] res, nums, sums;
+
     public Board(Context c) {
         super(c);
         init();
     }
+
     public Board(Context c, AttributeSet a) {
         super(c, a);
         init();
     }
+
     public Board(Context c, AttributeSet a, int s) {
         super(c, a, s);
         init();
@@ -245,6 +248,7 @@ class Paints {
     private static Paint wheat;
     private static Paint desert;
     private static Paint text;
+
     public Paints() {
         brick = new Paint();
         brick.setColor(Color.rgb(244, 113, 66));

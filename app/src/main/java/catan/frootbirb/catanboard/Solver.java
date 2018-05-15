@@ -137,6 +137,8 @@ class Solver {
                 numVars,
                 new IndomainRandom<>()
         );
+
+        // TODO: smart exception handling for unsolved graphs
         numSearch.labeling(s, numSelect);
         resSearch.labeling(s, resSelect);
     }
