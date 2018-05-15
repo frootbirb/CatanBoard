@@ -1,5 +1,7 @@
 package catan.frootbirb.catanboard;
 
+import android.content.SharedPreferences;
+
 import org.jacop.constraints.Eq;
 import org.jacop.constraints.GCC;
 import org.jacop.constraints.Or;
@@ -29,17 +31,21 @@ class Solver {
     public static final int[] numVal = {1, 2, 3, 4, 5, 0, 5, 4, 3, 2, 1};
     private static final Store s = new Store();
     private static int size, tol;
-    private static boolean exp, bal, port;
+    private static boolean exp, bal;
     private static IntVar resVars[], numVars[], resSums[];
 
-    public Solver(boolean inPort, int inTol, boolean inExp, boolean inBal, boolean[] inDist) {
+    public Solver(SharedPreferences prefs) {
+
+        boolean port, distRes, distNum, distVal;
 
         // initialize lists and vars
-        port = inPort;
-        tol = inTol;
-        exp = inExp;
-        bal = inBal;
-        boolean dist[] = inDist;
+        port = prefs.getBoolean("port_pref", false);
+        tol = Integer.parseInt(prefs.getString("bal_tol_pref", "0"));
+        exp = prefs.getBoolean("size_pref", false);
+        bal = prefs.getBoolean("bal_pref", true);
+        distRes = prefs.getBoolean("dist_res_pref", true);
+        distNum = prefs.getBoolean("dist_num_pref", true);
+        distVal = prefs.getBoolean("dist_val_pref", true);
         size = exp ? 30 : 19;
 
         resVars = new IntVar[size];
@@ -83,13 +89,13 @@ class Solver {
             }
 
             // impose distribution constraints
-            if (dist[0] || dist[1] || dist[2]) {
+            if (distRes || distNum || distVal) {
                 for (int j : adj[i]) {
-                    if (dist[0])
+                    if (distRes)
                         s.impose(new XneqY(resVars[i], resVars[j]));
-                    if (dist[1])
+                    if (distNum)
                         s.impose(new XneqY(numVars[i], numVars[j]));
-                    if (dist[2])
+                    if (distVal)
                         s.impose(new XneqY(valVars[i], valVars[j]));
                 }
             }

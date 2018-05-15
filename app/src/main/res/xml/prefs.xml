@@ -2,20 +2,19 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreference
-        android:defaultValue="true"
-        android:key="port_pref"
-        android:summary="Ensure ports are not next to controlled resource"
-        android:title="Ports" />
-
-    <SwitchPreference
+        android:checked="false"
         android:defaultValue="false"
         android:key="size_pref"
-        android:summary="Use expanded edition board (30 tiles)"
+        android:persistent="true"
+        android:summaryOff="Use standard edition board (19 tiles)"
+        android:summaryOn="Use expanded edition board (30 tiles)"
         android:title="Expanded" />
 
     <SwitchPreference
+        android:checked="true"
         android:defaultValue="true"
         android:key="bal_pref"
+        android:persistent="true"
         android:summary="Balance resources' total probability"
         android:title="Balance" />
 
@@ -24,91 +23,43 @@
         android:dependency="bal_pref"
         android:entries="@array/bal_entries"
         android:entryValues="@array/bal_values"
-        android:key="bal_tolerance_pref"
-        android:summary="Tolerance for balance setting"
+        android:key="bal_tol_pref"
+        android:persistent="true"
+        android:summary="Controls level of resource balancing"
         android:title="Tolerance" />
 
     <SwitchPreference
+        android:checked="true"
         android:defaultValue="true"
         android:key="dist_res_pref"
+        android:persistent="true"
         android:summary="Distribute resources (prevent adjacent identical resources)"
         android:title="Resource Distribution" />
 
     <SwitchPreference
+        android:checked="true"
         android:defaultValue="true"
         android:key="dist_num_pref"
+        android:persistent="true"
         android:summary="Distribute numbers (prevent adjacent identical numbers)"
         android:title="Number Distribution" />
 
     <SwitchPreference
+        android:checked="true"
         android:defaultValue="true"
         android:dependency="dist_num_pref"
         android:key="dist_val_pref"
+        android:persistent="true"
         android:summary="Distribute values (prevent adjacent identical roll probabilities)"
         android:title="Value Distribution" />
 
-    <!--
+    <SwitchPreference
+        android:checked="false"
+        android:defaultValue="false"
+        android:key="port_pref"
+        android:persistent="true"
+        android:summaryOff="Ports not considered when placing resources"
+        android:summaryOn="Ports considered when placing resources"
+        android:title="Ports" />
 
-    case R.id.rBtnPorts:
-    port = true;
-    item.setChecked(true);
-    return true;
-    case R.id.rBtnNoPorts:
-    port = false;
-    item.setChecked(true);
-    return true;
-
-    case R.id.chkBal:
-    bal = !item.isChecked();
-    item.setChecked(bal);
-    MenuItem t = _menu.findItem(R.id.rBtnTight);
-    MenuItem m = _menu.findItem(R.id.rBtnMed);
-    MenuItem l = _menu.findItem(R.id.rBtnLoose);
-    t.setEnabled(bal);
-    m.setEnabled(bal);
-    l.setEnabled(bal);
-    return true;
-    case R.id.rBtnTight:
-    tolerance = Board.TIGHT;
-    item.setChecked(true);
-    return true;
-    case R.id.rBtnMed:
-    tolerance = Board.MED;
-    item.setChecked(true);
-    return true;
-    case R.id.rBtnLoose:
-    tolerance = Board.LOOSE;
-    item.setChecked(true);
-    return true;
-
-    case R.id.rBtnStd:
-    expanded = false;
-    item.setChecked(true);
-    return true;
-    case R.id.rBtnExp:
-    expanded = true;
-    item.setChecked(true);
-    return true;
-
-    case R.id.chkDistRes:
-    dist[0] = !item.isChecked();
-    item.setChecked(dist[0]);
-    return true;
-    case R.id.chkDistNum:
-    dist[1] = !item.isChecked();
-    item.setChecked(dist[1]);
-    return true;
-    case R.id.chkDistVal:
-    dist[2] = !item.isChecked();
-    item.setChecked(dist[2]);
-    MenuItem n = _menu.findItem(R.id.chkDistNum);
-    if (dist[2]) {
-    wasSet = n.isChecked();
-    n.setChecked(true);
-    } else {
-    n.setChecked(wasSet);
-    }
-    n.setEnabled(!dist[2]);
-    return true;
-    -->
 </PreferenceScreen>

@@ -25,10 +25,7 @@ public class Board extends View {
     public static final int WH = 4;
     public static final int DE = 5;
     public static final int TXT = 6;
-    // enums for tolerances
-    public static final int TIGHT = 0;
-    public static final int MED = 1;
-    public static final int LOOSE = 2;
+
     private static int r, h, s;
     private static boolean exp;
     private static Paints p;
@@ -66,7 +63,6 @@ public class Board extends View {
     }
 
     private void init() {
-        this.setWillNotDraw(false);
         p = new Paints();
         res = new int[30];
         nums = new int[30];
