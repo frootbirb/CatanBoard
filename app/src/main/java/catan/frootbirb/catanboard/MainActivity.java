@@ -1,8 +1,11 @@
 package catan.frootbirb.catanboard;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.preference.SwitchPreference;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -75,6 +78,24 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate(bundle);
             // Load the Preferences from the XML file
             addPreferencesFromResource(R.xml.prefs);
+
+            Preference button = findPreference("default_pref");
+            button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    prefs.edit().clear().commit();
+                    PreferenceManager.setDefaultValues(getActivity(), R.xml.prefs, true);
+                    for (String key : prefs.getAll().keySet()) {
+                        if (key.equals("bal_tol_pref"))
+                            continue;
+                        boolean val = prefs.getBoolean(key, false);
+                        SwitchPreference pref = (SwitchPreference) findPreference(key);
+                        pref.setChecked(val);
+                    }
+                    return true;
+                }
+            });
         }
     }
 }

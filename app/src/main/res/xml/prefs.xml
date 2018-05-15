@@ -62,4 +62,8 @@
         android:summaryOn="Ports considered when placing resources"
         android:title="Ports" />
 
+    <Preference
+        android:key="default_pref"
+        android:title="Restore default values" />
+
 </PreferenceScreen>
