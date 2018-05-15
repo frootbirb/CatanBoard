@@ -1,6 +1,7 @@
 package catan.frootbirb.catanboard;
 
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -10,6 +11,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 
 /**
  * Created by frootbirb on 6/28/17.
@@ -18,29 +21,21 @@ import android.view.MenuItem;
 public class MainActivity extends AppCompatActivity {
     private static Settings mSettings;
 
-    // creates and displays a solution
-    private void make() {
-        // get solution
-        Solver s = new Solver(PreferenceManager.getDefaultSharedPreferences(this));
-
-        // set board info and redraw
-        Board d = findViewById(R.id.drawing);
-        d.setWillNotDraw(false);
-        d.setLists(s.getRes(), s.getNums(), s.getSums());
-        d.invalidate();
-    }
-
     private void hide() {
         Board d = findViewById(R.id.drawing);
         d.setWillNotDraw(true);
         d.invalidate();
     }
 
+    private void solve() {
+        new Solve().execute(PreferenceManager.getDefaultSharedPreferences(this));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        make();
+        solve();
     }
 
     // handle menu items
@@ -56,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     getFragmentManager().beginTransaction().remove(mSettings).commit();
                     mSettings = null;
-                    make();
+                    solve();
                 }
                 return true;
             default:
@@ -96,6 +91,43 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
             });
+        }
+    }
+
+    private class Solve extends AsyncTask<SharedPreferences, Void, Solver> {
+
+        ProgressBar spinner;
+        Board d;
+
+        @Override
+        protected void onPreExecute() {
+            spinner = findViewById(R.id.spinner);
+            d = findViewById(R.id.drawing);
+
+            // start spinner and freeze drawing
+            spinner.setVisibility(View.VISIBLE);
+            d.setWillNotDraw(true);
+        }
+
+        @Override
+        protected Solver doInBackground(SharedPreferences... sharedPreferences) {
+            Solver s;
+            do {
+                s = new Solver(sharedPreferences[0]);
+            } while (s.failed());
+            return s;
+        }
+
+        @Override
+        protected void onPostExecute(Solver s) {
+            super.onPostExecute(s);
+
+            // set board info
+            d.setLists(s.getRes(), s.getNums(), s.getSums());
+
+            // stop spinner and resume drawing
+            spinner.setVisibility(View.GONE);
+            d.setWillNotDraw(false);
         }
     }
 }

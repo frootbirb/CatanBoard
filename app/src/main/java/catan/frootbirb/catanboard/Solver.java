@@ -18,6 +18,7 @@ import org.jacop.search.IndomainRandom;
 import org.jacop.search.InputOrderSelect;
 import org.jacop.search.Search;
 import org.jacop.search.SelectChoicePoint;
+import org.jacop.search.TimeOutListener;
 
 import java.util.ArrayList;
 
@@ -31,7 +32,7 @@ class Solver {
     public static final int[] numVal = {1, 2, 3, 4, 5, 0, 5, 4, 3, 2, 1};
     private static final Store s = new Store();
     private static int size, tol;
-    private static boolean exp, bal;
+    private static boolean exp, bal, failed;
     private static IntVar resVars[], numVars[], resSums[];
 
     public Solver(SharedPreferences prefs) {
@@ -47,6 +48,7 @@ class Solver {
         distNum = prefs.getBoolean("dist_num_pref", true);
         distVal = prefs.getBoolean("dist_val_pref", true);
         size = exp ? 30 : 19;
+        failed = false;
 
         resVars = new IntVar[size];
         numVars = new IntVar[size];
@@ -144,7 +146,40 @@ class Solver {
                 new IndomainRandom<>()
         );
 
-        // TODO: smart exception handling for unsolved graphs
+        numSearch.setTimeOutListener(new TimeOutListener() {
+            @Override
+            public void executedAtTimeOut(int i) {
+                failed = true;
+            }
+
+            @Override
+            public void setChildrenListeners(TimeOutListener[] timeOutListeners) {
+
+            }
+
+            @Override
+            public void setChildrenListeners(TimeOutListener timeOutListener) {
+
+            }
+        });
+
+        resSearch.setTimeOutListener(new TimeOutListener() {
+            @Override
+            public void executedAtTimeOut(int i) {
+                failed = true;
+            }
+
+            @Override
+            public void setChildrenListeners(TimeOutListener[] timeOutListeners) {
+
+            }
+
+            @Override
+            public void setChildrenListeners(TimeOutListener timeOutListener) {
+
+            }
+        });
+
         numSearch.labeling(s, numSelect);
         resSearch.labeling(s, resSelect);
     }
@@ -382,5 +417,9 @@ class Solver {
             ret[r] = resSums[r].value() - 1;
         }
         return ret;
+    }
+
+    public boolean failed() {
+        return failed;
     }
 }

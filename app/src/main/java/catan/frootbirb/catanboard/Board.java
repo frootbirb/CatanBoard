@@ -63,6 +63,7 @@ public class Board extends View {
     }
 
     private void init() {
+        setWillNotDraw(true);
         p = new Paints();
         res = new int[30];
         nums = new int[30];
