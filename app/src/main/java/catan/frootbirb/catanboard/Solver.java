@@ -1,7 +1,6 @@
 package catan.frootbirb.catanboard;
 
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import org.jacop.constraints.Eq;
 import org.jacop.constraints.GCC;
@@ -36,7 +35,7 @@ class Solver {
     private static boolean exp, bal, failed;
     private static IntVar resVars[], numVars[], resSums[];
 
-    public Solver(SharedPreferences prefs) {
+    Solver(SharedPreferences prefs) {
 
         boolean port, distRes, distNum, distVal;
 
@@ -75,6 +74,12 @@ class Solver {
             numVars[i] = new IntVar(s, 2, 12);
             valVars[i] = new IntVar(s, 0, 5);
 
+            // impose desert special case
+            s.impose(new Eq(
+                    new XeqC(resVars[i], Board.DE),
+                    new XeqC(numVars[i], 7)
+            ));
+
             for (int r = 0; r < 6; r++) {
                 // impose correlation between val and num lists
                 PrimitiveConstraint or[] = {new XeqC(numVars[i], r + 2), new XeqC(numVars[i], 12 - r)};
@@ -83,11 +88,15 @@ class Solver {
                         new XeqC(valVars[i], numVal[r]) // ith tile's value is equal to the probability of n+2
                 ));
 
+                if (r == 5)
+                    break;
+
                 // impose count
+                PrimitiveConstraint or2[] = {new XeqC(resVars[i], r), new XeqC(resVars[i], Board.DE)};
                 resLoc[r][i] = new IntVar(s, 0, 5);
                 s.impose(new Eq(
-                        new XeqC(resVars[i], r), // ith tile is of type r
-                        new XeqY(resLoc[r][i], valVars[i]) // ith tile's resource value count matches its value
+                        new XeqY(resLoc[r][i], valVars[i]), // ith tile's resource value count matches its value
+                        new Or(or2) // ith tile is of type r
                 ));
             }
 
@@ -102,12 +111,6 @@ class Solver {
                         s.impose(new XneqY(valVars[i], valVars[j]));
                 }
             }
-
-            // impose desert special case
-            s.impose(new Eq(
-                    new XeqC(resVars[i], 5),
-                    new XeqC(numVars[i], 7)
-            ));
         }
 
         // impose port constraints
@@ -183,13 +186,6 @@ class Solver {
 
         numSearch.labeling(s, numSelect);
         resSearch.labeling(s, resSelect);
-
-        for (int r = 0; r <= 5; r++) {
-            for (int i = 0; i < size; i++)
-                if (resLoc[r][i].value() != 0)
-                    Log.d("", "Resource " + r + " value of tile " + i + ": " + resLoc[r][i].value());
-
-        }
     }
 
     // define adjacency list for ports
@@ -346,7 +342,7 @@ class Solver {
     private IntVar[] getResCount() {
         IntVar resCount[] = new IntVar[6];
         int base = exp ? 6 : 4;
-        int minor = exp ? 2 : 1;
+        int desert = exp ? 2 : 1;
         for (int r = 0; r < 6; r++) {
             switch (r) {
                 case Board.BR:
@@ -359,7 +355,7 @@ class Solver {
                     resCount[r] = new IntVar(s, base, base);
                     break;
                 case Board.DE:
-                    resCount[r] = new IntVar(s, minor, minor);
+                    resCount[r] = new IntVar(s, desert, desert);
             }
         }
         return resCount;
@@ -367,8 +363,8 @@ class Solver {
 
     // initialize sum calculator
     private IntVar[][] getResLoc() {
-        IntVar[] resLoc[] = new IntVar[6][];
-        for (int r = 0; r < 6; r++) {
+        IntVar[] resLoc[] = new IntVar[5][];
+        for (int r = 0; r < 5; r++) {
             // create variables
             resLoc[r] = new IntVar[size];
             resSums[r] = new IntVar(s);
@@ -427,6 +423,17 @@ class Solver {
     }
 
     public boolean failed() {
-        return failed;
+        return failed || silentFailure();
+    }
+
+    // TODO: remove this when I figure out why the sum doesn't always work
+    private boolean silentFailure() {
+        int sum = 0;
+
+        for (int i : getSums()) {
+            sum += i;
+        }
+
+        return sum != (exp ? 88 : 58);
     }
 }
