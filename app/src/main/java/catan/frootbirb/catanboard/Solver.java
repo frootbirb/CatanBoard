@@ -1,6 +1,7 @@
 package catan.frootbirb.catanboard;
 
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import org.jacop.constraints.Eq;
 import org.jacop.constraints.GCC;
@@ -52,7 +53,7 @@ class Solver {
 
         resVars = new IntVar[size];
         numVars = new IntVar[size];
-        resSums = new IntVar[5];
+        resSums = new IntVar[6];
 
         // define resource quantities
         IntVar resCount[] = getResCount();
@@ -74,19 +75,19 @@ class Solver {
             numVars[i] = new IntVar(s, 2, 12);
             valVars[i] = new IntVar(s, 0, 5);
 
-            for (int n = 0; n < 5; n++) {
+            for (int r = 0; r < 6; r++) {
                 // impose correlation between val and num lists
-                PrimitiveConstraint or[] = {new XeqC(numVars[i], n + 2), new XeqC(numVars[i], 12 - n)};
+                PrimitiveConstraint or[] = {new XeqC(numVars[i], r + 2), new XeqC(numVars[i], 12 - r)};
                 s.impose(new Eq(
-                        new Or(or),
-                        new XeqC(valVars[i], numVal[n])
+                        new Or(or), // ith tile's number is n+2 or ith tile's number is 12-n (same prob)
+                        new XeqC(valVars[i], numVal[r]) // ith tile's value is equal to the probability of n+2
                 ));
 
                 // impose count
-                resLoc[n][i] = new IntVar(s, 0, 5);
+                resLoc[r][i] = new IntVar(s, 0, 5);
                 s.impose(new Eq(
-                        new XeqC(resVars[i], n),
-                        new XeqY(resLoc[n][i], valVars[i])
+                        new XeqC(resVars[i], r), // ith tile is of type r
+                        new XeqY(resLoc[r][i], valVars[i]) // ith tile's resource value count matches its value
                 ));
             }
 
@@ -121,7 +122,7 @@ class Solver {
 
         // impose balance constraints
         for (int r = 0; r < 5; r++) {
-            s.impose(new SumInt(s, resLoc[r], "==", resSums[r]));
+            s.impose(new SumInt(s, resLoc[r], "==", resSums[r])); // resSums[r] = sum(resLoc[r])
         }
 
         // impose cardinality constraints
@@ -182,6 +183,13 @@ class Solver {
 
         numSearch.labeling(s, numSelect);
         resSearch.labeling(s, resSelect);
+
+        for (int r = 0; r <= 5; r++) {
+            for (int i = 0; i < size; i++)
+                if (resLoc[r][i].value() != 0)
+                    Log.d("", "Resource " + r + " value of tile " + i + ": " + resLoc[r][i].value());
+
+        }
     }
 
     // define adjacency list for ports
@@ -359,19 +367,18 @@ class Solver {
 
     // initialize sum calculator
     private IntVar[][] getResLoc() {
-        IntVar[] resLoc[] = new IntVar[5][];
-        for (int r = 0; r < 5; r++) {
+        IntVar[] resLoc[] = new IntVar[6][];
+        for (int r = 0; r < 6; r++) {
             // create variables
             resLoc[r] = new IntVar[size];
             resSums[r] = new IntVar(s);
 
             // set domains
             if (bal) {
-                int base = exp ? 22 : 12;
-                int mult = exp ? 2 : 1;
-                resSums[r].setDomain(base - tol * mult, base + 1 + tol * mult);
+                int base = exp ? 17 : 11;
+                resSums[r].setDomain(base - tol, base + 1 + tol);
             } else {
-                resSums[r].setDomain(0, 200);
+                resSums[r].setDomain(0, 100);
             }
         }
         return resLoc;
@@ -381,7 +388,7 @@ class Solver {
     private IntVar[] getNumCount() {
         IntVar numCount[] = new IntVar[11];
         int base = exp ? 3 : 2;
-        int minor = exp ? 2 : 1;
+        int minor = base - 1;
         for (int n = 1; n < 5; n++) {
             numCount[n] = new IntVar(s, base, base);
             numCount[10 - n] = new IntVar(s, base, base);
@@ -414,7 +421,7 @@ class Solver {
     public int[] getSums() {
         int ret[] = new int[5];
         for (int r = 0; r < 5; r++) {
-            ret[r] = resSums[r].value() - 1;
+            ret[r] = resSums[r].value();
         }
         return ret;
     }
