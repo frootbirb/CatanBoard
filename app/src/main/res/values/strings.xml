@@ -3,4 +3,30 @@
     <string name="settings">Settings</string>
     <string name="info">Information</string>
     <string name="make">Refresh Board</string>
+    <string name="infoLink">
+        <a href="https://www.catan.com/files/downloads/catan_5th_ed_rules_eng_150303.pdf">
+            Game Rules PDF download
+        </a>
+    </string>
+    <string name="infoQuestionsTitle">
+        Questions to ask before starting
+    </string>
+    <string name="infoQuestions">
+        • Can a longest road be broken if someone else builds a settlement along it? (rules say YES)
+        \n• If no, can a longest road be made through someone else\'s settlement if built in from both sides? (state-dependent or history-dependent)
+        \n• Can you bribe the robber? (rules say NO)
+        \n• Can you do tradethroughs with port owners? (e.g. trade two sheep and a brick to the owner of the sheep port for a resource on your turn) (rules say NO)
+        \n• Are trades for futures, certain build locations, or other non-card services permitted? (rules say NO)
+    </string>
+    <string name="infoCredits">
+        This app was written by Conor Walsh as frootbirb.
+        Questions or suggestions should be directed
+        to <a href="mailto:frootbirb@gmail.com">frootbirb@gmail.com</a>.
+        \nThe app relies on JaCoP constraint solver by Krzysztof Kuchcinski and Radoslaw Szymanek
+        (<a href="https://osolpro.atlassian.net/wiki/spaces/JACOP/overview">Webpage</a>),
+        and is accordingly licensed under
+        the <a href="https://www.gnu.org/licenses/agpl-3.0.html">Gnu Affero General Public License</a>,
+        with <a href="https://osolpro.atlassian.net/wiki/spaces/JACOP/pages/24248325/JaCoP+Licence">additional terms</a>
+        as added by the developers of the JaCoP library.
+    </string>
 </resources>

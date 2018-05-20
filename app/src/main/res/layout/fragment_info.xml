@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/infoLink"
+        style="@style/InfoTitle"
+        android:text="@string/infoLink" />
+
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/infoQuestionsTitle"
+        style="@style/InfoTitle"
+        android:text="@string/infoQuestionsTitle"
+        app:layout_constraintTop_toBottomOf="@id/infoLink" />
+
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/infoQuestions"
+        style="@style/InfoTheme"
+        android:text="@string/infoQuestions"
+        app:layout_constraintTop_toBottomOf="@id/infoQuestionsTitle" />
+
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/infoCredits"
+        style="@style/InfoTheme"
+        android:text="@string/infoCredits"
+        android:textColor="@color/grey"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:ignore="SmallSp" />
+
+
+</android.support.constraint.ConstraintLayout>

@@ -1,7 +1,8 @@
 package catan.frootbirb.catanboard;
 
+import android.annotation.SuppressLint;
+import android.app.Fragment;
 import android.content.SharedPreferences;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -9,11 +10,14 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.support.v7.app.AppCompatActivity;
+import android.text.method.LinkMovementMethod;
+import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 /**
  * Created by frootbirb on 6/28/17.
@@ -22,7 +26,7 @@ import android.widget.ProgressBar;
 public class MainActivity extends AppCompatActivity {
     private static Settings mSettings;
     private static Info mInfo;
-    private static Menu menu;
+    private Menu menu;
 
     private void hide() {
         Board d = findViewById(R.id.drawing);
@@ -99,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    prefs.edit().clear().commit();
+                    prefs.edit().clear().apply();
                     PreferenceManager.setDefaultValues(getActivity(), R.xml.prefs, true);
                     for (String key : prefs.getAll().keySet()) {
                         if (key.equals("bal_tol_pref"))
@@ -114,33 +118,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    static public class Info extends PreferenceFragment {
+    static public class Info extends Fragment {
         @Override
-        public void onCreate(Bundle bundle) {
-            super.onCreate(bundle);
-            // Load the Preferences from the XML file
-            addPreferencesFromResource(R.xml.prefs);
-
-            Preference button = findPreference("default_pref");
-            button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    prefs.edit().clear().commit();
-                    PreferenceManager.setDefaultValues(getActivity(), R.xml.prefs, true);
-                    for (String key : prefs.getAll().keySet()) {
-                        if (key.equals("bal_tol_pref"))
-                            continue;
-                        boolean val = prefs.getBoolean(key, false);
-                        SwitchPreference pref = (SwitchPreference) findPreference(key);
-                        pref.setChecked(val);
-                    }
-                    return true;
-                }
-            });
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            // Inflate the layout for this fragment
+            View result = inflater.inflate(R.layout.fragment_info, container, false);
+            // make links clickable
+            TextView link = result.findViewById(R.id.infoLink);
+            TextView credits = result.findViewById(R.id.infoCredits);
+            link.setMovementMethod(LinkMovementMethod.getInstance());
+            credits.setMovementMethod(LinkMovementMethod.getInstance());
+            return result;
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class Solve extends AsyncTask<SharedPreferences, Void, Solver> {
 
         ProgressBar spinner;

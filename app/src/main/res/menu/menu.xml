@@ -2,17 +2,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/btnMake"
-        android:title="@string/make"
         android:icon="@drawable/ic_refresh"
-        app:showAsAction="always"/>
+        android:title="@string/make"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/btnInfo"
-        android:title="@string/info"
         android:icon="@drawable/ic_info"
-        app:showAsAction="always"/>
+        android:title="@string/info"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/btnSettings"
-        android:title="@string/settings"
         android:icon="@drawable/ic_menu"
-        app:showAsAction="always"/>
+        android:title="@string/settings"
+        app:showAsAction="ifRoom" />
 </menu>
