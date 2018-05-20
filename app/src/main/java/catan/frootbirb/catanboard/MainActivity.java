@@ -1,6 +1,7 @@
 package catan.frootbirb.catanboard;
 
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -20,6 +21,8 @@ import android.widget.ProgressBar;
 
 public class MainActivity extends AppCompatActivity {
     private static Settings mSettings;
+    private static Info mInfo;
+    private static Menu menu;
 
     private void hide() {
         Board d = findViewById(R.id.drawing);
@@ -41,33 +44,77 @@ public class MainActivity extends AppCompatActivity {
     // handle menu items
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
 
+        if (mInfo != null) {
+            getFragmentManager().beginTransaction().remove(mInfo).commit();
+            mInfo = null;
+        }
+        if (mSettings != null) {
+            getFragmentManager().beginTransaction().remove(mSettings).commit();
+            mSettings = null;
+        }
+        hide();
+
+        int icon = R.drawable.ic_hex;
+
+        switch (item.getItemId()) {
             case R.id.btnSettings:
-                if (mSettings == null) {
-                    mSettings = new Settings();
-                    hide();
-                    getFragmentManager().beginTransaction().replace(android.R.id.content, mSettings).commit();
-                } else {
-                    getFragmentManager().beginTransaction().remove(mSettings).commit();
-                    mSettings = null;
-                    solve();
-                }
-                return true;
+                mSettings = new Settings();
+                getFragmentManager().beginTransaction().replace(android.R.id.content, mSettings).commit();
+                break;
+            case R.id.btnInfo:
+                mInfo = new Info();
+                getFragmentManager().beginTransaction().replace(android.R.id.content, mInfo).commit();
+                break;
+            case R.id.btnMake:
+                solve();
+                icon = R.drawable.ic_refresh;
+                break;
             default:
                 return false;
         }
+
+        menu.getItem(0).setIcon(icon);
+
+        return true;
     }
 
     // initialize menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu, menu);
+        this.menu = menu;
+        getMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
 
     static public class Settings extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle bundle) {
+            super.onCreate(bundle);
+            // Load the Preferences from the XML file
+            addPreferencesFromResource(R.xml.prefs);
+
+            Preference button = findPreference("default_pref");
+            button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    prefs.edit().clear().commit();
+                    PreferenceManager.setDefaultValues(getActivity(), R.xml.prefs, true);
+                    for (String key : prefs.getAll().keySet()) {
+                        if (key.equals("bal_tol_pref"))
+                            continue;
+                        boolean val = prefs.getBoolean(key, false);
+                        SwitchPreference pref = (SwitchPreference) findPreference(key);
+                        pref.setChecked(val);
+                    }
+                    return true;
+                }
+            });
+        }
+    }
+
+    static public class Info extends PreferenceFragment {
         @Override
         public void onCreate(Bundle bundle) {
             super.onCreate(bundle);
