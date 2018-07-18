@@ -19,23 +19,10 @@ import java.util.Arrays;
  */
 
 public class Board extends View {
-
-    // enums for material types
-    public static final int BR = 0;
-    public static final int OR = 1;
-    public static final int WO = 2;
-    public static final int SH = 3;
-    public static final int WH = 4;
-    public static final int DE = 5;
-    public static final int TXT = 6;
-    public static final int RED = 7;
-    public static final int BCK = 8;
-
     public static final String BOARD_STATE = "boardState";
 
     private static int r, h, s;
     private static boolean exp;
-    private static Paints p;
     private static int[] res, nums, sums;
 
     public Board(Context c) {
@@ -53,30 +40,14 @@ public class Board extends View {
         init();
     }
 
-    public static int[][] getPorts(boolean expanded) {
-
-        int[] small[] = {
-                {0, 1, 3, 6, 11, 12, 15, 16, 17}, // locations
-                {1, 0, 5, 0, 4, 5, 2, 3, 2}, // modes
-                {TXT, BR, TXT, WO, TXT, SH, WH, TXT, OR} // types
-        };
-        int[] big[] = {
-                {0, 1, 6, 7, 12, 17, 22, 23, 27, 28, 29}, // locations
-                {1, 0, 0, 5, 3, 4, 2, 5, 3, 2, 4}, // modes
-                {TXT, BR, WO, TXT, TXT, TXT, WH, SH, TXT, OR, SH} // types
-        };
-
-        return expanded ? big : small;
-    }
-
     private void init() {
         setWillNotDraw(true);
-        p = new Paints();
         res = new int[30];
         nums = new int[30];
         sums = new int[5];
     }
 
+    // helper function for drawing hex tiles
     private Path hex(int x, int y) {
 
         int cdx[] = {h, h, 0, -h, -h, 0};
@@ -91,6 +62,7 @@ public class Board extends View {
         return p;
     }
 
+    // helper function for drawing ports
     private Path port(int x, int y, int mode) {
 
         int mod = r / 13;
@@ -149,10 +121,9 @@ public class Board extends View {
         return p;
     }
 
+    // helper function for drawing dots
     private void circler(Canvas canvas, float x, float y, float mod, Paint color) {
         int dot = r / 17;
-        canvas.drawCircle(x + mod * dot, (int) (y + r / 1.8), (float) (dot * 1.5), p.Resource(BCK));
-        canvas.drawCircle(x - mod * dot, (int) (y + r / 1.8), (float) (dot * 1.5), p.Resource(BCK));
         canvas.drawCircle(x + mod * dot, (int) (y + r / 1.8), dot, color);
         canvas.drawCircle(x - mod * dot, (int) (y + r / 1.8), dot, color);
     }
@@ -162,30 +133,35 @@ public class Board extends View {
         //TODO: overhaul drawing
         super.onDraw(canvas);
         // initialize params
-        boolean tall = (((this.getHeight() * 1.0) / this.getWidth()) > 1.2);
-        r = exp ? this.getWidth() / 13 : this.getWidth() / 11;
-        h = (int) ((double) r * Math.sqrt(3) / 2);
-        s = r * 3 / 4;
-        p.setFont(r);
+        boolean tall = (((this.getHeight() * 1.0) / this.getWidth()) > 1.2); // evaluate phone height to determine showing sums
+        r = exp ? this.getWidth() / 13 : this.getWidth() / 11; // hex radius
+        h = (int) (r * Math.sqrt(3) / 2); // hex height
+        s = r * 3 / 4; // hex side length
 
+        // set font size
+        RE.TXT.p.setTextSize(r);
+        RE.RED.p.setTextSize(r);
+
+        // find center of rendering space
         int cx = this.getWidth() / 2;
-
         int cy = tall ? (int) Math.ceil(this.getHeight() * 0.56) : this.getHeight() / 2;
+
         int count = 0;
+        // set indices of top and bottom rows
         int min = exp ? -3 : -2, max = exp ? 4 : 3;
 
         // draw count tiles
         if (tall) {
             for (int i = 0; i < 5; i++) {
                 int x = r * (i - 2) * 2;
-                canvas.drawPath(hex(x + cx, r * 2), p.Resource(i));
-                canvas.drawText(Integer.toString(sums[i]), x + cx - r / 2, r * 2 + s / 2, p.Resource(TXT));
+                canvas.drawPath(hex(x + cx, r * 2), RE.res(i).p);
+                canvas.drawText(Integer.toString(sums[i]), x + cx - r / 2, r * 2 + s / 2, RE.TXT.p);
             }
         }
 
         // draw board
         for (int i = min; i < max; i++) { // what row?
-            int nudge = 0;
+            int nudge = 0; // nudge tiles to the side because rows are staggered
             if (i % 2 != 0) {
                 nudge = i * h * (exp ? 1 : -1);
             }
@@ -196,37 +172,36 @@ public class Board extends View {
                 nudge += r;
             }
 
-            // calculates bounds (how many blocks & where they are)
+            // calculates bounds (how many tiles & where they are)
             int low = exp ? min + Math.abs((int) Math.floor(i / 2.0)) : min + Math.abs((int) Math.ceil(i / 2.0));
             int high = exp ? max - 1 - Math.abs((int) Math.ceil(i / 2.0)) : max - Math.abs((int) Math.floor(i / 2.0));
 
             for (int j = low; j < high; j++) { // which block?
                 // make paint object
-                Paint txt = p.Resource(TXT);
+                Paint txt = RE.TXT.p;
 
+                // calculate center of tile
                 int x = cx + r * j * 2 + nudge;
-                int y = cy + r * 2 * i;
+                int y = cy + r * i * 2;
                 // draw hex
-                canvas.drawPath(hex(x, y), p.Resource(res[count]));
+                canvas.drawPath(hex(x, y), RE.res(res[count]).p);
                 // draw port if applicable
-                int index = Arrays.binarySearch(getPorts(exp)[0], count);
+                int index = Arrays.binarySearch(getPorts()[0], count);
                 if (index >= 0) { // if this tile has a port
-                    canvas.drawPath(port(x, y, getPorts(exp)[1][index]), p.Resource(getPorts(exp)[2][index]));
+                    canvas.drawPath(port(x, y, getPorts()[1][index]), RE.res(getPorts()[2][index]).p);
                 }
 
-                if (nums[count] != 7) { // if not the desert and populated
-                    int val = Solver.numVal[nums[count] - 2];
-                    //txt = val == 5 ? p.Resource(RED) : p.Resource(TXT);
-
+                if (nums[count] != 7) { // if not the desert
+                    int prob = Solver.numProb[nums[count] - 2];
                     // draw the dots
-                    switch (val) {
+                    switch (prob) {
                         case 4:
                             circler(canvas, x, y, 6, txt);
                         case 2:
                             circler(canvas, x, y, 2, txt);
                             break;
                         case 5:
-                            txt = p.Resource(RED);
+                            txt = RE.RED.p;
                             circler(canvas, x, y, 8, txt);
                         case 3:
                             circler(canvas, x, y, 4, txt);
@@ -245,8 +220,147 @@ public class Board extends View {
         }
     }
 
+    // define port qualities
+    static int[][] getPorts() {
+
+        int[] small[] = {
+                {0, 1, 3, 6, 11, 12, 15, 16, 17}, // locations
+                {1, 0, 5, 0, 4, 5, 2, 3, 2}, // modes
+                {RE.TXT.i, RE.BR.i, RE.TXT.i, RE.WO.i, RE.TXT.i, RE.SH.i, RE.WH.i, RE.TXT.i, RE.OR.i} // types
+        };
+        int[] big[] = {
+                {0, 1, 6, 7, 12, 17, 22, 23, 27, 28, 29}, // locations
+                {1, 0, 0, 5, 3, 4, 2, 5, 3, 2, 4}, // modes
+                {RE.TXT.i, RE.BR.i, RE.WO.i, RE.TXT.i, RE.TXT.i, RE.TXT.i, RE.WH.i, RE.SH.i, RE.TXT.i, RE.OR.i, RE.SH.i} // types
+        };
+
+        return exp ? big : small;
+    }
+
+    // define adjacency list for tiles
+    static int[][] getAdj() {
+
+        int[] small[] = {
+                {}, // 0
+                {0}, // 1
+                {1}, // 2
+                {0}, // 3
+                {0, 1, 3}, // 4
+                {1, 2, 4}, // 5
+                {2, 5}, // 6
+                {3}, // 7
+                {3, 4, 7}, // 8
+                {4, 5, 8}, // 9
+                {5, 6, 9}, // 10
+                {6, 10}, // 11
+                {7, 8}, // 12
+                {8, 9, 12}, // 13
+                {9, 10, 13}, // 14
+                {10, 11, 14}, // 15
+                {12, 13}, // 16
+                {13, 14, 16}, // 17
+                {14, 15, 17} // 18
+        };
+        int[] big[] = {
+                {}, // 0
+                {0}, // 1
+                {1}, // 2
+                {0}, // 3
+                {0, 1, 3}, // 4
+                {1, 2, 4}, // 5
+                {2, 5}, // 6
+                {3}, // 7
+                {3, 4, 7}, // 8
+                {4, 5, 8}, // 9
+                {5, 6, 9}, // 10
+                {6, 10}, // 11
+                {7}, // 12
+                {7, 8, 12}, // 13
+                {8, 9, 13}, // 14
+                {9, 10, 14}, // 15
+                {10, 11, 15}, // 16
+                {11, 16}, // 17
+                {12, 13}, // 18
+                {13, 14, 18}, // 19
+                {14, 15, 19}, // 20
+                {15, 16, 20}, // 21
+                {16, 17, 21}, // 22
+                {18, 19}, // 23
+                {19, 20, 23}, // 24
+                {20, 21, 24}, // 25
+                {21, 22, 25}, // 26
+                {23, 24}, // 27
+                {24, 25, 27}, // 28
+                {25, 26, 28}, // 29
+        };
+
+        return exp ? big : small;
+    }
+
+    // define adjacency list for ports
+    static int[][] getPortAdj() {
+
+        int[] small[] = {
+                {1, -1, -1, -1, -1, 3}, // 0
+                {2, 0, -1, -1, -1, -1}, // 1
+                {-1, -1, 1, -1, 6, -1}, // 2
+                {-1, 0, -1, -1, -1, 7}, // 3
+                {}, // 4
+                {}, // 5
+                {2, -1, -1, -1, 11, -1}, // 6
+                {-1, 3, -1, 12, -1, -1}, // 7
+                {}, // 8
+                {}, // 9
+                {}, // 10
+                {6, -1, 15, -1, -1, -1}, // 11
+                {-1, -1, -1, 16, -1, 7}, // 12
+                {}, // 13
+                {}, // 14
+                {-1, -1, 18, -1, 11, -1}, // 15
+                {-1, -1, 17, -1, -1, 12}, // 16
+                {-1, -1, 18, -1, -1, -1}, // 17
+                {-1, -1, -1, 17, 15, -1} // 18
+        };
+
+        int[] big[] = {
+                {1, -1, -1, -1, -1, 3}, // 0
+                {2, 0, -1, -1, -1, -1}, // 1
+                {-1, -1, 1, -1, 6, -1}, // 2
+                {-1, 0, -1, -1, -1, 7}, // 3
+                {}, // 4
+                {}, // 5
+                {2, -1, -1, -1, 11, -1}, // 6
+                {-1, 3, -1, -1, -1, 12}, // 7
+                {}, // 8
+                {}, // 9
+                {}, // 10
+                {6, -1, -1, -1, 17, -1}, // 11
+                {-1, 7, -1, 18, -1, -1}, // 12
+                {}, // 13
+                {}, // 14
+                {}, // 15
+                {}, // 16
+                {11, -1, 22, -1, -1, -1}, // 17
+                {-1, -1, -1, 23, -1, 12}, // 18
+                {}, // 19
+                {}, // 20
+                {}, // 21
+                {-1, -1, 26, -1, 17, -1}, // 22
+                {-1, -1, -1, 27, -1, 18}, // 23
+                {}, // 24
+                {}, // 25
+                {-1, -1, 29, -1, 22, -1}, // 26
+                {-1, -1, 28, -1, -1, 23}, // 27
+                {-1, -1, 29, 27, -1, -1}, // 28
+                {-1, -1, -1, 28, 26, -1} // 29
+        };
+
+        return exp ? big : small;
+    }
+
+    // populate board from input JSON of board state data
     public void setLists(String boardStateStr) {
-        JSONObject boardState = null;
+        JSONObject boardState;
         String[] resArray, numArray, sumArray;
         try {
             boardState = new JSONObject(boardStateStr);
@@ -262,74 +376,50 @@ public class Board extends View {
             for (int i = 0; i < sumArray.length; ++i) {
                 sums[i] = Integer.parseInt(sumArray[i]);
             }
-
-            exp = resArray.length == 30;
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
+
+    // set board size
+    static void setExp(boolean expIn) {
+        exp = expIn;
+    }
 }
 
-class Paints {
+// enum for resource types
+enum RE {
+    BR(0, 3, Color.rgb(244, 113, 66), "brick"),
+    OR(1, 3, Color.rgb(147, 147, 147), "ore"),
+    WO(2, 4, Color.rgb(57, 132, 80), "wood"),
+    SH(3, 4, Color.rgb(132, 193, 127), "sheep"),
+    WH(4, 4, Color.rgb(249, 221, 2), "wheat"),
+    DE(5, 1, Color.rgb(244, 220, 158), "desert"),
+    TXT(6, 0, Color.BLACK, "text"),
+    RED(7, 0, Color.RED, "red number"),
+    BCK(8, 0, Color.WHITE, "background");
 
-    private static Paint brick, ore, wood, sheep, wheat, desert, text, white, red;
+    private final int c;
+    final int i;
+    final Paint p;
+    final String n;
 
-
-    public Paints() {
-        brick = new Paint();
-        brick.setColor(Color.rgb(244, 113, 66));
-        brick.setStyle(Paint.Style.FILL);
-        ore = new Paint();
-        ore.setColor(Color.rgb(147, 147, 147));
-        ore.setStyle(Paint.Style.FILL);
-        wood = new Paint();
-        wood.setColor(Color.rgb(57, 132, 80));
-        wood.setStyle(Paint.Style.FILL);
-        sheep = new Paint();
-        sheep.setColor(Color.rgb(132, 193, 127));
-        sheep.setStyle(Paint.Style.FILL);
-        wheat = new Paint();
-        wheat.setColor(Color.rgb(249, 221, 2));
-        wheat.setStyle(Paint.Style.FILL);
-        desert = new Paint();
-        desert.setColor(Color.rgb(244, 220, 158));
-        desert.setStyle(Paint.Style.FILL);
-        text = new Paint();
-        text.setColor(Color.BLACK);
-        white = new Paint();
-        white.setColor(Color.WHITE);
-        red = new Paint();
-        red.setColor(Color.RED);
+    RE(int index, int count, int color, String name) {
+        i = index;
+        c = count;
+        n = name;
+        p = new Paint();
+        p.setColor(color);
     }
 
-    public void setFont(int set) {
-        text.setTextSize(set);
-        white.setTextSize(set);
-        red.setTextSize(set);
+    int c(boolean expanded) {
+        int ret = c;
+        if (expanded && c != 0)
+            ret += c == 1 ? 1 : 2;
+        return ret;
     }
 
-    public Paint Resource(int c) {
-        switch (c) {
-            case Board.BR:
-                return brick;
-            case Board.OR:
-                return ore;
-            case Board.WO:
-                return wood;
-            case Board.WH:
-                return wheat;
-            case Board.SH:
-                return sheep;
-            case Board.DE:
-                return desert;
-            case Board.TXT:
-                return text;
-            case Board.RED:
-                return red;
-            case Board.BCK:
-                return white;
-            default:
-                return text;
-        }
+    static RE res(int index) {
+        return RE.values()[index];
     }
 }

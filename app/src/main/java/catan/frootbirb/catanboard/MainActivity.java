@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
             mSettings = null;
         }
         hide();
+        // TODO: hide until off page
 
         int icon = R.drawable.ic_hex;
 
@@ -137,15 +138,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-            final SwitchPreference val_dist = (SwitchPreference) findPreference("dist_val_pref");
+            final SwitchPreference prob_dist = (SwitchPreference) findPreference("dist_prob_pref");
             final SwitchPreference num_dist = (SwitchPreference) findPreference("dist_num_pref");
-            num_dist.setEnabled(!val_dist.isChecked());
-            num_dist.setChecked(num_dist.isChecked() || val_dist.isChecked());
-            val_dist.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            num_dist.setEnabled(!prob_dist.isChecked());
+            num_dist.setChecked(num_dist.isChecked() || prob_dist.isChecked());
+            prob_dist.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    num_dist.setEnabled(!val_dist.isChecked());
-                    num_dist.setChecked(num_dist.isChecked() || val_dist.isChecked());
+                    num_dist.setEnabled(!prob_dist.isChecked());
+                    num_dist.setChecked(num_dist.isChecked() || prob_dist.isChecked());
                     return true;
                 }
             });
@@ -224,8 +225,7 @@ public class MainActivity extends AppCompatActivity {
             int len = prefs.getBoolean("size_pref", false) && in.length > 18 ? 30 : in.length;
             for (int i = 0; i < len; i++)
                 builder.append(in[i]).append(",");
-            String ret = builder.toString();
-            return ret;
+            return builder.toString();
         }
     }
 }

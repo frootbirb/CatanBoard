@@ -6,8 +6,7 @@
         android:defaultValue="false"
         android:key="size_pref"
         android:persistent="true"
-        android:summaryOff="Use standard edition board (19 tiles)"
-        android:summaryOn="Use expanded edition board (30 tiles)"
+        android:summary="Use expanded edition board (30 tiles)"
         android:title="Expanded" />
 
     <SwitchPreference
@@ -15,7 +14,7 @@
         android:defaultValue="true"
         android:key="bal_pref"
         android:persistent="true"
-        android:summary="Balance resources' total probability"
+        android:summary="Balance resources' relative total probability"
         android:title="Balance" />
 
     <ListPreference
@@ -25,7 +24,7 @@
         android:entryValues="@array/bal_values"
         android:key="bal_tol_pref"
         android:persistent="true"
-        android:summary="Controls level of resource balancing"
+        android:summary="Set level of resource balancing"
         android:title="Tolerance" />
 
     <SwitchPreference
@@ -33,23 +32,23 @@
         android:defaultValue="true"
         android:key="dist_res_pref"
         android:persistent="true"
-        android:summary="Distribute resources (prevent adjacent identical resources)"
+        android:summary="Prevent adjacent identical resources"
         android:title="Resource Distribution" />
 
     <SwitchPreference
         android:checked="true"
         android:defaultValue="true"
-        android:key="dist_val_pref"
+        android:key="dist_prob_pref"
         android:persistent="true"
-        android:summary="Distribute values (prevent adjacent identical roll probabilities)"
-        android:title="Value Distribution" />
+        android:summary="Prevent adjacent identical roll probabilities"
+        android:title="Probability Distribution" />
 
     <SwitchPreference
         android:checked="true"
         android:defaultValue="true"
         android:key="dist_num_pref"
         android:persistent="true"
-        android:summary="Distribute numbers (prevent adjacent identical numbers)"
+        android:summary="Prevent adjacent identical numbers"
         android:title="Number Distribution" />
 
     <SwitchPreference
