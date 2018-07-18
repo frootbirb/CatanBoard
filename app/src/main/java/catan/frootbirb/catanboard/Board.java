@@ -8,6 +8,9 @@ import android.graphics.Path;
 import android.util.AttributeSet;
 import android.view.View;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Arrays;
 
 /*
@@ -25,6 +28,10 @@ public class Board extends View {
     public static final int WH = 4;
     public static final int DE = 5;
     public static final int TXT = 6;
+    public static final int RED = 7;
+    public static final int BCK = 8;
+
+    public static final String BOARD_STATE = "boardState";
 
     private static int r, h, s;
     private static boolean exp;
@@ -67,6 +74,7 @@ public class Board extends View {
         p = new Paints();
         res = new int[30];
         nums = new int[30];
+        sums = new int[5];
     }
 
     private Path hex(int x, int y) {
@@ -141,8 +149,17 @@ public class Board extends View {
         return p;
     }
 
+    private void circler(Canvas canvas, float x, float y, float mod, Paint color) {
+        int dot = r / 17;
+        canvas.drawCircle(x + mod * dot, (int) (y + r / 1.8), (float) (dot * 1.5), p.Resource(BCK));
+        canvas.drawCircle(x - mod * dot, (int) (y + r / 1.8), (float) (dot * 1.5), p.Resource(BCK));
+        canvas.drawCircle(x + mod * dot, (int) (y + r / 1.8), dot, color);
+        canvas.drawCircle(x - mod * dot, (int) (y + r / 1.8), dot, color);
+    }
+
     @Override
     public void onDraw(Canvas canvas) {
+        //TODO: overhaul drawing
         super.onDraw(canvas);
         // initialize params
         boolean tall = (((this.getHeight() * 1.0) / this.getWidth()) > 1.2);
@@ -156,17 +173,13 @@ public class Board extends View {
         int cy = tall ? (int) Math.ceil(this.getHeight() * 0.56) : this.getHeight() / 2;
         int count = 0;
         int min = exp ? -3 : -2, max = exp ? 4 : 3;
-        int dot = r / 17;
-
-        // make paint objects
-        Paint txt = p.Resource(TXT);
 
         // draw count tiles
         if (tall) {
             for (int i = 0; i < 5; i++) {
                 int x = r * (i - 2) * 2;
                 canvas.drawPath(hex(x + cx, r * 2), p.Resource(i));
-                canvas.drawText(Integer.toString(sums[i]), x + cx - r / 2, r * 2 + s / 2, txt);
+                canvas.drawText(Integer.toString(sums[i]), x + cx - r / 2, r * 2 + s / 2, p.Resource(TXT));
             }
         }
 
@@ -188,6 +201,9 @@ public class Board extends View {
             int high = exp ? max - 1 - Math.abs((int) Math.ceil(i / 2.0)) : max - Math.abs((int) Math.floor(i / 2.0));
 
             for (int j = low; j < high; j++) { // which block?
+                // make paint object
+                Paint txt = p.Resource(TXT);
+
                 int x = cx + r * j * 2 + nudge;
                 int y = cy + r * 2 * i;
                 // draw hex
@@ -198,53 +214,66 @@ public class Board extends View {
                     canvas.drawPath(port(x, y, getPorts(exp)[1][index]), p.Resource(getPorts(exp)[2][index]));
                 }
 
-                if (nums[count] != 7) { // if not the desert
-                    // draw the numbers
+                if (nums[count] != 7) { // if not the desert and populated
+                    int val = Solver.numVal[nums[count] - 2];
+                    //txt = val == 5 ? p.Resource(RED) : p.Resource(TXT);
+
+                    // draw the dots
+                    switch (val) {
+                        case 4:
+                            circler(canvas, x, y, 6, txt);
+                        case 2:
+                            circler(canvas, x, y, 2, txt);
+                            break;
+                        case 5:
+                            txt = p.Resource(RED);
+                            circler(canvas, x, y, 8, txt);
+                        case 3:
+                            circler(canvas, x, y, 4, txt);
+
+                        default:
+                            circler(canvas, x, y, 0, txt);
+                    }
+                    // draw the numbers TODO: get this outlined
                     canvas.drawText(Integer.toString(nums[count]),
                             x - ((nums[count] > 9) ? r / 2 : r / 4),
                             y + s / 2,
                             txt);
-                    // draw the dots
-                    switch (Solver.numVal[nums[count] - 2]) {
-                        case 4:
-                            canvas.drawCircle(x + 6 * dot, (int) (y + r / 1.8), dot, txt);
-                            canvas.drawCircle(x - 6 * dot, (int) (y + r / 1.8), dot, txt);
-                        case 2:
-                            canvas.drawCircle(x + 2 * dot, (int) (y + r / 1.8), dot, txt);
-                            canvas.drawCircle(x - 2 * dot, (int) (y + r / 1.8), dot, txt);
-                            break;
-                        case 5:
-                            canvas.drawCircle(x + 8 * dot, (int) (y + r / 1.8), dot, txt);
-                            canvas.drawCircle(x - 8 * dot, (int) (y + r / 1.8), dot, txt);
-                        case 3:
-                            canvas.drawCircle(x + 4 * dot, (int) (y + r / 1.8), dot, txt);
-                            canvas.drawCircle(x - 4 * dot, (int) (y + r / 1.8), dot, txt);
-                        default:
-                            canvas.drawCircle(x, (int) (y + r / 1.8), dot, txt);
-                    }
                 }
                 count++;
             }
         }
     }
 
-    public void setLists(int[] inRes, int[] inNums, int[] inSums) {
-        res = inRes;
-        nums = inNums;
-        sums = inSums;
-        exp = res.length == 30;
+    public void setLists(String boardStateStr) {
+        JSONObject boardState = null;
+        String[] resArray, numArray, sumArray;
+        try {
+            boardState = new JSONObject(boardStateStr);
+
+            resArray = boardState.getString("res").split(",");
+            numArray = boardState.getString("num").split(",");
+            sumArray = boardState.getString("sum").split(",");
+
+            for (int i = 0; i < resArray.length; ++i) {
+                res[i] = Integer.parseInt(resArray[i]);
+                nums[i] = Integer.parseInt(numArray[i]);
+            }
+            for (int i = 0; i < sumArray.length; ++i) {
+                sums[i] = Integer.parseInt(sumArray[i]);
+            }
+
+            exp = resArray.length == 30;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
 
 class Paints {
 
-    private static Paint brick;
-    private static Paint ore;
-    private static Paint wood;
-    private static Paint sheep;
-    private static Paint wheat;
-    private static Paint desert;
-    private static Paint text;
+    private static Paint brick, ore, wood, sheep, wheat, desert, text, white, red;
+
 
     public Paints() {
         brick = new Paint();
@@ -267,10 +296,16 @@ class Paints {
         desert.setStyle(Paint.Style.FILL);
         text = new Paint();
         text.setColor(Color.BLACK);
+        white = new Paint();
+        white.setColor(Color.WHITE);
+        red = new Paint();
+        red.setColor(Color.RED);
     }
 
     public void setFont(int set) {
         text.setTextSize(set);
+        white.setTextSize(set);
+        red.setTextSize(set);
     }
 
     public Paint Resource(int c) {
@@ -289,6 +324,10 @@ class Paints {
                 return desert;
             case Board.TXT:
                 return text;
+            case Board.RED:
+                return red;
+            case Board.BCK:
+                return white;
             default:
                 return text;
         }

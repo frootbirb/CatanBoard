@@ -19,6 +19,9 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Created by frootbirb on 6/28/17.
  */
@@ -27,33 +30,51 @@ public class MainActivity extends AppCompatActivity {
     private static Settings mSettings;
     private static Info mInfo;
     private Menu menu;
+    private Board d;
 
     private void hide() {
-        Board d = findViewById(R.id.drawing);
         d.setWillNotDraw(true);
         d.invalidate();
     }
 
-    private void solve() {
-        new Solve().execute(PreferenceManager.getDefaultSharedPreferences(this));
+    private void getBestBoard(boolean solve) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (!prefs.contains(Board.BOARD_STATE) || solve) {
+            new Solve().execute(prefs);
+            //TODO: drawn since settings update
+        } else {
+            String boardState = prefs.getString(Board.BOARD_STATE, "null");
+
+            // set board info
+            d.setLists(boardState);
+
+            // stop spinner and resume drawing
+            findViewById(R.id.spinner).setVisibility(View.GONE);
+            d.setWillNotDraw(false);
+        }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        solve();
+        d = findViewById(R.id.drawing);
+        getBestBoard(false);
     }
 
     // handle menu items
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
+        boolean wasOnFragment = false;
+
         if (mInfo != null) {
+            wasOnFragment = true;
             getFragmentManager().beginTransaction().remove(mInfo).commit();
             mInfo = null;
         }
         if (mSettings != null) {
+            wasOnFragment = true;
             getFragmentManager().beginTransaction().remove(mSettings).commit();
             mSettings = null;
         }
@@ -71,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
                 getFragmentManager().beginTransaction().replace(android.R.id.content, mInfo).commit();
                 break;
             case R.id.btnMake:
-                solve();
+                getBestBoard(!wasOnFragment);
                 icon = R.drawable.ic_refresh;
                 break;
             default:
@@ -115,6 +136,19 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
             });
+
+            final SwitchPreference val_dist = (SwitchPreference) findPreference("dist_val_pref");
+            final SwitchPreference num_dist = (SwitchPreference) findPreference("dist_num_pref");
+            num_dist.setEnabled(!val_dist.isChecked());
+            num_dist.setChecked(num_dist.isChecked() || val_dist.isChecked());
+            val_dist.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    num_dist.setEnabled(!val_dist.isChecked());
+                    num_dist.setChecked(num_dist.isChecked() || val_dist.isChecked());
+                    return true;
+                }
+            });
         }
     }
 
@@ -138,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
 
         ProgressBar spinner;
         Board d;
+        SharedPreferences prefs;
 
         @Override
         protected void onPreExecute() {
@@ -152,8 +187,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Solver doInBackground(SharedPreferences... sharedPreferences) {
             Solver s;
+            prefs = sharedPreferences[0];
             do {
-                s = new Solver(sharedPreferences[0]);
+                s = new Solver(prefs);
             } while (s.failed());
             return s;
         }
@@ -162,12 +198,34 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Solver s) {
             super.onPostExecute(s);
 
+            JSONObject boardState = new JSONObject();
+
+            try {
+                boardState.put("res", stringify(s.getRes()));
+                boardState.put("num", stringify(s.getNums()));
+                boardState.put("sum", stringify(s.getSums()));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(Board.BOARD_STATE, boardState.toString()).apply();
+
             // set board info
-            d.setLists(s.getRes(), s.getNums(), s.getSums());
+            d.setLists(boardState.toString());
 
             // stop spinner and resume drawing
             spinner.setVisibility(View.GONE);
             d.setWillNotDraw(false);
+        }
+
+        private String stringify(int[] in) {
+            StringBuilder builder = new StringBuilder();
+            int len = prefs.getBoolean("size_pref", false) && in.length > 18 ? 30 : in.length;
+            for (int i = 0; i < len; i++)
+                builder.append(in[i]).append(",");
+            String ret = builder.toString();
+            return ret;
         }
     }
 }

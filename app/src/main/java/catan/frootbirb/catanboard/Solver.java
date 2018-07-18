@@ -1,9 +1,12 @@
 package catan.frootbirb.catanboard;
 
 import android.content.SharedPreferences;
+import android.util.Log;
 
+import org.jacop.constraints.And;
 import org.jacop.constraints.Eq;
 import org.jacop.constraints.GCC;
+import org.jacop.constraints.IfThen;
 import org.jacop.constraints.Or;
 import org.jacop.constraints.PrimitiveConstraint;
 import org.jacop.constraints.SumInt;
@@ -69,6 +72,7 @@ class Solver {
         // iterate through solution lists
         IntVar valVars[] = new IntVar[size];
         for (int i = 0; i < size; i++) {
+
             // create variables
             resVars[i] = new IntVar(s, 0, 5);
             numVars[i] = new IntVar(s, 2, 12);
@@ -101,15 +105,21 @@ class Solver {
             }
 
             // impose distribution constraints
-            if (distRes || distNum || distVal) {
-                for (int j : adj[i]) {
-                    if (distRes)
-                        s.impose(new XneqY(resVars[i], resVars[j]));
-                    if (distNum)
-                        s.impose(new XneqY(numVars[i], numVars[j]));
-                    if (distVal)
-                        s.impose(new XneqY(valVars[i], valVars[j]));
-                }
+            for (int j : adj[i]) {
+                if (distRes)
+                    s.impose(new XneqY(resVars[i], resVars[j]));
+                if (distNum)
+                    s.impose(new XneqY(numVars[i], numVars[j]));
+                if (distVal)
+                    s.impose(new XneqY(valVars[i], valVars[j]));
+
+                // always impose special 6/8 rule
+                PrimitiveConstraint or[] = {new XeqC(numVars[i], 6), new XeqC(numVars[i], 8)};
+                PrimitiveConstraint and[] = {new XneqC(numVars[j], 6), new XneqC(numVars[j], 8)};
+                s.impose(new IfThen(
+                        new Or(or), // ith tile is a 6 or an 8
+                        new And(and) // ith tile is not a 6 or an 8
+                ));
             }
         }
 
@@ -423,17 +433,10 @@ class Solver {
     }
 
     public boolean failed() {
-        return failed || silentFailure();
+        return failed;
     }
 
-    // TODO: remove this when I figure out why the sum doesn't always work
-    private boolean silentFailure() {
-        int sum = 0;
-
-        for (int i : getSums()) {
-            sum += i;
-        }
-
-        return sum != (exp ? 88 : 58);
+    private void log(int curVar, String input){
+        Log.d("", "Tile " + curVar + ": " + input);
     }
 }

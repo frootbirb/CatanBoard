@@ -39,19 +39,18 @@
     <SwitchPreference
         android:checked="true"
         android:defaultValue="true"
-        android:key="dist_num_pref"
-        android:persistent="true"
-        android:summary="Distribute numbers (prevent adjacent identical numbers)"
-        android:title="Number Distribution" />
-
-    <SwitchPreference
-        android:checked="true"
-        android:defaultValue="true"
-        android:dependency="dist_num_pref"
         android:key="dist_val_pref"
         android:persistent="true"
         android:summary="Distribute values (prevent adjacent identical roll probabilities)"
         android:title="Value Distribution" />
+
+    <SwitchPreference
+        android:checked="true"
+        android:defaultValue="true"
+        android:key="dist_num_pref"
+        android:persistent="true"
+        android:summary="Distribute numbers (prevent adjacent identical numbers)"
+        android:title="Number Distribution" />
 
     <SwitchPreference
         android:checked="false"
